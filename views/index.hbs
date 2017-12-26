@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>请假</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1, user-scalable=no">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="stylesheet" href="./css/mobiscroll-2.13.2.full.min.css">
+    <link rel="stylesheet" href="./css/mui.min.css">
+    <style>
+        .button {
+            font-size: 18px;
+            font-weight: normal;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #FFF;
+            background-color: #8797ec;
+            border: 1px solid rgb(129, 142, 201);
+            padding: .5em 0em;
+            margin: .5em .7em;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mui-content">
+        <div class="mui-input-row">
+						<label>请假类型：</label>
+						<select id="holiday_type" data-type="selectP"  style="display: none;" >
+                            
+                <option><span>事假</span></option>
+                <option><span>病假</span></option>
+                <option><span>年假</span></option>
+            </select
+					</div>
+        
+            <div class="mui-input-row">
+						<label>开始时间：</label>
+						<input  id="beginTime" placeholder="请选择"/>
+					</div>
+            
+            <div class="mui-input-row">
+						<label>结束时间：</label>
+						<input  id="endTime" placeholder="请选择"/>
+					</div>
+
+                    <div class="mui-input-row">
+						<label>时长：</label>
+						<input type="text" id="count" placeholder="时长"/>
+					</div>
+           
+           <div class="mui-input-row" style="">
+                
+				</div>
+            <div class="mui-input-row" >
+                    <label>请假事由: </label>
+				</div>
+                <div class="mui-input-row"style="margin: 0px 15px;" >
+					<textarea id="reason" rows="5" placeholder="输入请假理由" ></textarea>
+				</div>
+            
+           
+             <div class="button" onclick="sendApply()">提交申请</div>
+        </div>
+        <div id="config" style="display:none">{{_config}}</div>
+        
+    </div>
+    <script src="http://g.alicdn.com/ilw/cdnjs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="https://g.alicdn.com/dingding/open-develop/1.9.0/dingtalk.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/mobiscroll-2.13.2.full.min.js"></script>
+    <script>
+        var con = $("#config").text();
+        var _holiday_message = {
+            type:'',
+            beginTime:'',
+            endTime:'',
+            count:'',
+            reason:'',
+            userName:'',
+            accessToken:''
+        };
+        var _config = JSON.parse(con);
+        console.log(dd)
+        dd.config({
+            agentId: agentId, // 必填，微应用ID--config.js
+            corpId: _config.corpId, //必填，企业ID
+            timeStamp: _config.timeStamp, // 必填，生成签名的时间戳
+            nonceStr: _config.nonceStr, // 必填，生成签名的随机串
+            signature: _config.signature, // 必填，签名
+            //type: 0, //选填。0表示微应用的jsapi,1表示服务窗的jsapi。不填默认为0。该参数从dingtalk.js的0.8.3版本开始支持
+            jsApiList: [
+                'runtime.info',
+                'biz.contact.choose',
+                'device.notification.confirm',
+                'device.notification.alert',
+                'device.notification.prompt',
+                'device.notification.toast',
+                'biz.ding.create',
+                'biz.util.openLink',
+                'device.geolocation.get',
+                'biz.util.scan',
+                'biz.user.get',
+                'biz.navigation.close',
+                'biz.util.open',
+                'biz.chat.chooseConversationByCorpId',
+                'channel.permission.requestAuthCode'
+            ] // 必填，需要使用的jsapi列表，注意：不要带dd。
+        });
+        dd.ready(function () {
+           // alert(' DD begin...');
+            dd.runtime.permission.requestAuthCode({
+                corpId: _config.corpId,
+                onSuccess: function (info) {
+                    var code = info.code;
+                    $.ajax({
+                        url: getUserInfoByCode,
+                        type: 'get',
+                        data: {
+                            code: code
+                        },
+                        timeout: 10000,
+                        dataType: 'json',
+                        success: function (data) {
+                            var userId = data.userid;
+                            _holiday_message.userName = data.userName;
+                            _holiday_message.accessToken = data.accessToken;
+                             dd.device.notification.alert({
+                                message: "用户信息： " + JSON.stringify(data),
+                                title: "ZiFeng",
+                                buttonName: "OK"
+                            });
+                        },
+                        error: function () {
+
+                        },
+                        complete: function (xhr, status) {
+
+                        }
+                    })
+                },
+                onFail: function (err) {
+                    alert('fail: ' + JSON.stringify(err));
+                }
+            });
+
+
+            // 因为可以借用DD接口拿到简单的用户信息，此次需求不需要详细用户信息，即可不做免登陆操作
+            dd.biz.user.get({
+                corpId: _config.corpId,
+                onSuccess: function (info) {
+                    //alert('6. userGet success: ' + JSON.stringify(info));
+                },
+                onFail: function (err) {
+                     dd.device.notification.alert({
+                        message: "DD userGet fail: " + JSON.stringify(err),
+                        title: "ZiFeng",
+                        buttonName: "OK"
+                    }); 
+                }
+            });
+        });
+        dd.error(function (err) {
+            dd.device.notification.alert({
+                message: "DD error: " + JSON.stringify(err),
+                title: "Luo",
+                buttonName: "OK"
+            });
+        });
+
+        $('#holiday_type').mobiscroll().select({
+            theme: 'android-ios light',
+            mode: 'scroller',
+            display: 'bottom',
+            lang: 'zh',
+            cancelText: '取消',
+            setText: '确定', //确认按钮名称
+            headerText: '选择请假类型',
+            onSelect: function(value) {
+                //点击确定触发事件
+                _holiday_message.type = value;
+            }
+        });
+
+        
+        
+        var beginOpt = {
+		            preset: 'datetime', //日期
+		            theme: 'android-ios light', //皮肤样式
+                    display: 'bottom',
+		            mode: 'scroller', //日期选择模式
+		            dateFormat: 'yy-mm-dd', // 日期格式
+		            lang: 'zh',
+                    stepMinute: 1,
+                    showNow: true,
+		            setText: '确定', //确认按钮名称
+		            cancelText: '取消',//取消按钮名籍我
+		            dateOrder: 'yymmdd', //面板中日期排列格式
+		            dayText: '日', monthText: '月', yearText: '年',hourText: '时',minuteText: '分', //面板中年月日文字
+		            endYear:2100 ,//结束年份
+                    onSelect: function (value) {
+                    //点击确定触发的事件
+                    //alert(value);
+                    _holiday_message.beginTime = value;
+            }
+		    };
+		    $("#beginTime").mobiscroll(beginOpt);
+            var endOpt = {
+		            preset: 'datetime', //日期
+		            theme: 'android-ios light', //皮肤样式
+                    display: 'bottom',
+		            mode: 'scroller', //日期选择模式
+		            dateFormat: 'yy-mm-dd', // 日期格式
+		            lang: 'zh',
+                    stepMinute: 1,
+                    showNow: true,
+		            setText: '确定', //确认按钮名称
+		            cancelText: '取消',//取消按钮名籍我
+		            dateOrder: 'yymmdd', //面板中日期排列格式
+		            dayText: '日', monthText: '月', yearText: '年',hourText: '时',minuteText: '分', //面板中年月日文字
+		            endYear:2100 ,//结束年份
+                    onSelect: function (value) {
+                    //点击确定触发的事件
+                    //alert(value);
+                    _holiday_message.endTime = value;
+            }
+		    };
+		    $("#endTime").mobiscroll(endOpt);
+
+            function sendApply(){
+                _holiday_message.count =$('#count').val();
+                _holiday_message.reason = $('#reason').val();
+                if(!_holiday_message.type){
+                    dd.device.notification.toast({
+                        text: '请选择请假类型!', //提示信息
+                    });
+                    return;
+                }
+                if(!_holiday_message.beginTime){
+                    dd.device.notification.toast({
+                        text: '请选择开始时间!', //提示信息
+                    });
+                    return;
+                }
+                if(!_holiday_message.endTime){
+                    dd.device.notification.toast({
+                        text: '请选择结束时间!', //提示信息
+                    });
+                    return;
+                }
+                if(!_holiday_message.count){
+                    dd.device.notification.toast({
+                        text: '请填写请假时长!', //提示信息
+                    });
+                    return;
+                }
+                if(!_holiday_message.reason){
+                    dd.device.notification.toast({
+                        text: '请填写请假原因!', //提示信息
+                    });
+                    return;
+                }
+                $.ajax({
+                        url: createProcessinstance,
+                        type: 'post',
+                        data: _holiday_message,
+                        timeout: 10000,
+                        dataType: 'json',
+                        success: function (data) {
+                            var state = data.state;
+                            if(state==1){
+                                dd.device.notification.toast({
+                                    text: '请假申请成功!', //提示信息
+                                });
+                                dd.biz.navigation.close({
+                                    onSuccess : function(result) {
+                                        /*result结构
+                                        {}
+                                        */
+                                    },
+                                    onFail : function(err) {}
+                                })
+                            }else{
+                                dd.device.notification.toast({
+                                    text: '请假申请出错!', //提示信息
+                                });
+                            }
+                        
+                        },
+                        error: function (xhr,status) {
+                            alert("出错!"+status)
+                        },
+                        complete: function (xhr, status) {
+
+                        }
+                    });
+            }
+
+    //;F:\Git\Git\bin;F:\Git\Git\mingw64\libexec\git-core
+    //git remote add origin git@github.com:michaelliao/learngit.git
+    </script>
+
+</body>
+
+</html>
