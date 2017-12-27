@@ -32,13 +32,15 @@ router.get('/getInfoByCode', function(req, res) {
             departmentId: department_id
         };
         res.json(response);
-        // var callBackInfo = yield processinstance.registerCallBack(accessToken, {
-        //     call_back_tag: "bpms_task_change,bpms_instance_change",
-        //     token: "123456",
-        //     aes_key: "1122334455112233445511223344551122334455qaq",
-        //     url: "http://192.168.1.222:3000/processinstance"
-        // });
-        // console.log('callBackInfo : ' + JSON.stringify(callBackInfo));
+        var json = {
+            call_back_tag: ["bpms_task_change", "bpms_instance_change"],
+            token: "123456",
+            aes_key: "1122334455112233445511223344551122334455qaq",
+            url: "http://192.168.1.222:3000/processinstance"
+        };
+
+        var callBackInfo = yield processinstance.registerCallBack(accessToken, json);
+        console.log('callBackInfo : ' + JSON.stringify(callBackInfo));
     }).catch(function(err) {
         console.log(err);
     });

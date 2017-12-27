@@ -51,6 +51,7 @@ var httpUtil = {
                         }
                     });
                 } else {
+                    console.log('response.statusCode: ' + response.statusCode)
                     cb.error(response.statusCode);
                 }
             });

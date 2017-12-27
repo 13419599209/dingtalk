@@ -19,8 +19,11 @@ var params = {
 }
 
 router.post('/', urlencodedParser, function(req, res) {
-    console.log("注册回调的url")
+    console.log("post注册回调的url")
 })
 
+router.get('/', function(req, res) {
+    console.log("get注册回调的url")
+})
 
 module.exports = router
